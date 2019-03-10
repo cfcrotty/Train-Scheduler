@@ -31,15 +31,21 @@ var frequency = "";
 var snapID = "";
 
 var idxTimer1 = 0;
+var formats = ["HH:mm"];
+var isValidTime = false;
 
 //on click of submit
 $("#submit").on("click", function (event) {
     event.preventDefault();
+    audioToPlay = "assets/audio/train.mp3";
+    var audio = new Audio(audioToPlay);
+    audio.play();
     trainName = $("#trainName").val().trim();
     destination = $("#destination").val().trim();
     firstTrainTime = $("#firstTrainTime").val().trim();
     frequency = $("#frequency").val().trim();
-    if (frequency && trainName && destination && firstTrainTime) {
+    isValidTime = moment(firstTrainTime, formats, true).isValid();
+    if (frequency && trainName && destination && firstTrainTime && isValidTime) {
         database.ref("/trains").push({
             trainName: trainName,
             destination: destination,
@@ -47,7 +53,11 @@ $("#submit").on("click", function (event) {
             frequency: frequency
         });
         $("#trainName, #destination, #firstTrainTime, #frequency").val("");
+        $("#message").empty();
         location.href = "index.html";
+    } else {
+        if (!trainName || !destination || !firstTrainTime || !frequency) {$("#message").html("<p style='color:red;'>Please fill up all fields.</p>");}
+        else if (!isValidTime) {$("#message").html("<p style='color:red;'>Please correct and follow the format (HH:mm) for First Train Time.</p>");}
     }
 });
 
@@ -116,21 +126,10 @@ function showHideImages() {
 }
 // END - Animation
 
+//run animation on page load
 $(document).ready(function () {
     intervalIdAnimate = setInterval(showHideImages, 1);
 });
-
-//const start = moment('2019-03-29 20:30');
-//const remainder = 30 - (start.minute() % 30);
-//const dateTime = moment(start).add(remainder, "minutes").format("DD.MM.YYYY, h:mm:ss a");
-
-//var tomorrow = moment('2019-03-29 20:30').add(1, 'days');
-//var duration = moment.duration(moment(tomorrow.diff(start)));
-
-var firstTrainTime1 = "16:00";
-var frequency1 = "30";
-var theDate1 = moment().format("YYYY-MM-DD "+firstTrainTime1+":00");
-//addTrainTime(theDate1,frequency1,0);
 
 //function to get next arrival and minutes away
 function addTrainTime(theDate,freq,trainID,idxTimer) {
@@ -220,8 +219,6 @@ function addTrainTime(theDate,freq,trainID,idxTimer) {
     
     return res;
 }
-
-
 
 
 
