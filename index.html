@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Train Scheduler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Dancing+Script|Playfair+Display" rel="stylesheet">
+    <!-- Added link to the jQuery Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Firebase Reference -->
+    <script src="https://www.gstatic.com/firebasejs/5.8.5/firebase.js"></script>
+    <!-- Moment.js Reference -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <!-- Added a link to Bootstrap-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <!--<link rel="stylesheet" type="text/css" href="assets/css/reset.css">-->
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+</head>
+
+<body>
+    <div class="jumbotron">
+        <h1 class="text-center big">Train Scheduler</h1>
+        <h2 class="text-center big2">Choo Choo. Chee Chee.</h2>
+    </div>
+    <div class="container">
+        <div id="firstRow" class="card mt-1">
+            <div class="card-header myHeader">Current Train Schedule</div>
+            <div id="" class="card-header">
+                <div class="card-body text-center">
+                    <table class="table table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Train Name</th>
+                                <th scope="col">Destination</th>
+                                <th scope="col">Frequency (min)</th>
+                                <th scope="col">Next Arrival</th>
+                                <th scope="col">Minutes Away</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                           
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="secondRow" class="card mt-1">
+            <div class="card-header myHeader">Add Train</div>
+            <div id="" class="card-header">
+                <div class="card-body text-center">
+                    <form>
+                        <div class="form-group">
+                            <label for="trainName">Train Name</label>
+                            <input type="text" class="form-control" id="trainName"
+                                placeholder="Train Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="destination">Destination</label>
+                            <input type="text" class="form-control" id="destination"
+                                placeholder="Destination">
+                        </div>
+                        <div class="form-group">
+                            <label for="firstTrainTime">First Train Time (HH:mm - Military Time)</label>
+                            <input type="text" class="form-control" id="firstTrainTime"
+                                placeholder="13:00">
+                        </div>
+                        <div class="form-group">
+                            <label for="frequency">Frequency (min)</label>
+                            <input type="text" class="form-control" id="frequency"
+                                placeholder="30">
+                        </div>
+                        <button type="button" id="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="cover" class="fullBack"></div>
+    <div id="" class="fullImage">
+        <div class="div1">
+            <input id="close" type="button" class="close" value="close">
+            <div id="insertWeather">
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+    <div>
+        <img class="animateImage" src="https://media.giphy.com/media/xGJOvvNhgLNFC/giphy.gif">
+    </div>
+    <div>
+        <img class="animateImage1" src="https://media.giphy.com/media/X6uE2j9DQql9K/giphy.gif">
+    </div>
+    <script>
+    </script>
+    <script type="text/javascript" src="assets/javascript/app.js"></script>
+</body>
+
+</html>
