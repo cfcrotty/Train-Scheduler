@@ -39,13 +39,16 @@ $("#submit").on("click", function (event) {
     destination = $("#destination").val().trim();
     firstTrainTime = $("#firstTrainTime").val().trim();
     frequency = $("#frequency").val().trim();
-    database.ref("/trains").push({
-        trainName: trainName,
-        destination: destination,
-        firstTrainTime: firstTrainTime,
-        frequency: frequency
-    });
-    $("#trainName, #destination, #firstTrainTime, #frequency").val("");
+    if (frequency && trainName && destination && firstTrainTime) {
+        database.ref("/trains").push({
+            trainName: trainName,
+            destination: destination,
+            firstTrainTime: firstTrainTime,
+            frequency: frequency
+        });
+        $("#trainName, #destination, #firstTrainTime, #frequency").val("");
+        location.href = "index.html";
+    }
 });
 
 //on change in firebase
@@ -75,13 +78,13 @@ database.ref("/trains").on("child_added", function (childSnapshot) {
             $("#minutesAway"+snapID).text(results[0]--);
         },60000);
         
-    },results[2]-1);
+    },results[2]);
     arrayVAr["setTimeoutVal"+snapID] = setTimeout(function(){
         arrayVAr["setIntervalVal1"+snapID] = setInterval(function(){
             changeNext = moment(results[3]).add(frequency, 'minutes');
             $("#nextArrival"+snapID).text(moment(changeNext).format("HH:mm"));
-        },(frequency-2)*60000);
-    },results[2]-1);
+        },(frequency)*60000);
+    },results[2]);
 
 }, function (errorObject) {
     console.log("The read failed: " + errorObject.code);
@@ -217,17 +220,6 @@ function addTrainTime(theDate,freq,trainID,idxTimer) {
     
     return res;
 }
-
-var today = moment().format("YYYY-MM-DD HH:mm");
-var todayUnix = moment(today).format('X');
-
-//console.log(moment(today).format('X'));
-//console.log(moment(tomorrow).format('X'));
-
-var newDateObj = moment(today).add(30, 'minutes');
-//console.log(newDateObj.toDate());
-//console.log(newDateObj.format('X'));
-
 
 
 
