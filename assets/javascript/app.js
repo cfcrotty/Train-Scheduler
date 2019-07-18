@@ -1,5 +1,3 @@
-
-
 //animation
 var widthScreen = 0;
 var heightScreen = 0;
@@ -34,6 +32,8 @@ var idxTimer1 = 0;
 var formats = ["HH:mm"];
 var isValidTime = false;
 
+var totalTrains = 0;
+
 //on click of submit
 $("#submit").on("click", function (event) {
     event.preventDefault();
@@ -56,10 +56,53 @@ $("#submit").on("click", function (event) {
         $("#message").empty();
         location.href = "index.html";
     } else {
-        if (!trainName || !destination || !firstTrainTime || !frequency) {$("#message").html("<p style='color:red;'>Please fill up all fields.</p>");}
-        else if (!isValidTime) {$("#message").html("<p style='color:red;'>Please correct and follow the format (HH:mm) for First Train Time.</p>");}
+        if (!trainName || !destination || !firstTrainTime || !frequency) { $("#message").html("<p style='color:red;'>Please fill up all fields.</p>"); }
+        else if (!isValidTime) { $("#message").html("<p style='color:red;'>Please correct and follow the format (HH:mm) for First Train Time.</p>"); }
     }
 });
+
+database.ref("/trains").on("value", function (snapshot) {
+    totalTrains = snapshot.numChildren();
+});
+
+var objResults = {};
+var objIdx = 0;
+
+Object.size = function (obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+// Get the size of an object
+//var size = Object.size(myArray);
+
+function runSetInterval(sec) {
+    let nextArrival = 0;
+    dateNowSec1 = moment().add(1, "minutes").format("YYYY-MM-DD HH:mm");
+    setTimeouTime1 = (moment(dateNowSec1).diff(moment(), "seconds")) * 1000;
+    setTimeout(function () {
+        for (var i = 0; i < Object.size(objResults); i++) {
+            objResults[i].res1--;
+            $("#minutesAway" + objResults[i].snapID).text(objResults[i].res1--);
+        }
+        setInterval(function () {
+            for (var i = 0; i < Object.size(objResults); i++) {
+                objResults[i].res1--;
+                if (objResults[i].res1 <= 0) { objResults[i].res1 = objResults[i].frequency; }
+                $("#minutesAway" + objResults[i].snapID).text(objResults[i].res1);
+                if (objResults[i].res2==moment().format("HH:mm")) {
+                    nextArrival = computeNextArrival(objResults[i].firstTrainTime,objResults[i].frequency);
+                    changeNext = moment(nextArrival).add(objResults[i].frequency, 'minutes');
+                    $("#nextArrival"+objResults[i].snapID).text(moment(changeNext).format("HH:mm"));
+                }
+            }
+        }, 60000);
+    }, setTimeouTime1);
+}
+
+
 
 //on change in firebase
 database.ref("/trains").on("child_added", function (childSnapshot) {
@@ -68,34 +111,24 @@ database.ref("/trains").on("child_added", function (childSnapshot) {
     firstTrainTime = childSnapshot.val().firstTrainTime;
     frequency = parseInt(childSnapshot.val().frequency);
     snapID = childSnapshot.key;
-    var date1 = moment().format("YYYY-MM-DD "+firstTrainTime+":00");
-    var results = addTrainTime(date1,frequency,snapID,idxTimer1);
+    var date1 = moment().format("YYYY-MM-DD " + firstTrainTime + ":00");
+    var results = addTrainTime(date1, frequency, snapID, idxTimer1);
     //console.log(results);
     $("tbody").append(`<tr id="tr${snapID}"><td id="name${snapID}">${childSnapshot.val().trainName}</td><td id="destination${snapID}">${childSnapshot.val().destination}</td><td id="frequency${snapID}">${childSnapshot.val().frequency}</td><td id="nextArrival${snapID}">${results[1]}</td><td id="minutesAway${snapID}">${results[0]}</td></tr>`);
 
-    var arrayVAr = [];
-    var changeNext = "";
-    clearTimeout(arrayVAr["setTimeoutVal"+snapID]);
-    clearInterval(arrayVAr["setIntervalVal"+snapID]);
-    clearInterval(arrayVAr["setIntervalVal1"+snapID]);
-    //if (frequency==1) frequency=3;
-    arrayVAr["setTimeoutVal"+snapID] = setTimeout(function(){
-        results[0]--;
-        $("#minutesAway"+snapID).text(results[0]--);
-        arrayVAr["setIntervalVal"+snapID] = setInterval(function(){
-            //toAdd--;
-            if (results[0]<=0) {results[0]=frequency;}
-            $("#minutesAway"+snapID).text(results[0]--);
-        },60000);
-        
-    },results[2]);
-    arrayVAr["setTimeoutVal"+snapID] = setTimeout(function(){
-        arrayVAr["setIntervalVal1"+snapID] = setInterval(function(){
-            changeNext = moment(results[3]).add(frequency, 'minutes');
-            $("#nextArrival"+snapID).text(moment(changeNext).format("HH:mm"));
-        },(frequency)*60000);
-    },results[2]);
+   
+    objResults[objIdx] = {
+        snapID: snapID,
+        trainName: trainName,
+        destination: destination,
+        firstTrainTime: firstTrainTime,
+        frequency: frequency,
+        res1: results[0],
+        res2: results[1]
+    };
 
+    if (totalTrains == objIdx) runSetInterval();
+    objIdx++;
 }, function (errorObject) {
     console.log("The read failed: " + errorObject.code);
 });
@@ -132,7 +165,7 @@ $(document).ready(function () {
 });
 
 //function to get next arrival and minutes away
-function addTrainTime(theDate,freq,trainID,idxTimer) {
+function addTrainTime(theDate, freq, trainID, idxTimer) {
     var res = [];
     var dateNow = moment().format("YYYY-MM-DD HH:mm:ss");
     var trainTime = moment(theDate);
@@ -147,28 +180,28 @@ function addTrainTime(theDate,freq,trainID,idxTimer) {
     var toAdd = 0;
     var newFreq = 0;
 
-    if (freq==0) newFreq=1;
-    else newFreq=freq-1; 
-    if (diffTime<0) {
-        modTime = (diffTime*-1)%freq;
-        divTime = Math.floor((diffTime*-1)/freq)+1;
-        nextArrivalTime=moment(trainTime).add(divTime * freq, 'minutes');
-        toAdd = freq-modTime;
-        console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm:ss")+" minutesAway="+toAdd);
-    } else if (diffTime==0) {
-        modTime = diffTime%freq;
+    if (freq == 0) newFreq = 1;
+    else newFreq = freq - 1;
+    if (diffTime < 0) {
+        modTime = (diffTime * -1) % freq;
+        divTime = Math.floor((diffTime * -1) / freq) + 1;
+        nextArrivalTime = moment(trainTime).add(divTime * freq, 'minutes');
+        toAdd = freq - modTime;
+        //console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm:ss")+" minutesAway="+toAdd);
+    } else if (diffTime == 0) {
+        modTime = diffTime % freq;
         nextArrivalTime = moment(trainTime).add(freq, 'minutes');
-        toAdd = freq-modTime;
-        console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm")+" minutesAway="+toAdd);
-        
-    } else if (diffTime>0) {
+        toAdd = freq - modTime;
+        //console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm")+" minutesAway="+toAdd);
+
+    } else if (diffTime > 0) {
         modTime = diffTime;
         nextArrivalTime = trainTime;
         toAdd = modTime;
-        console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm")+" minutesAway="+toAdd);
+        //console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm")+" minutesAway="+toAdd);
     }
-    dateNowSec = moment().add(1,"minutes").format("YYYY-MM-DD HH:mm");
-    setTimeouTime = (moment(dateNowSec).diff(moment(), "seconds"))*1000;
+    dateNowSec = moment().add(1, "minutes").format("YYYY-MM-DD HH:mm");
+    setTimeouTime = (moment(dateNowSec).diff(moment(), "seconds")) * 1000;
     var changeNext = nextArrivalTime;
     var arrayVAr = [];
     let setTimeoutVal = 0;
@@ -177,7 +210,46 @@ function addTrainTime(theDate,freq,trainID,idxTimer) {
 
     var toDisplay = "";
     var toAdd1 = toAdd;
-    /*
+    
+    idxTimer++;
+    res = [toAdd, moment(nextArrivalTime).format("HH:mm"), setTimeouTime, nextArrivalTime, arrayVAr];
+
+    return res;
+}
+
+function computeNextArrival(theDate, freq) {
+    let date1 = moment().format("YYYY-MM-DD " + theDate + ":00");
+    let dateNow = moment().format("YYYY-MM-DD HH:mm:ss");
+    let trainTime = moment(theDate);
+    let diffTime = trainTime.diff(moment(dateNow), "minutes");
+    let nextArrivalTime = 0;
+    let modTime = 0;
+    let divTime = 0;
+    let toAdd = 0;
+
+    if (diffTime < 0) {
+        modTime = (diffTime * -1) % freq;
+        divTime = Math.floor((diffTime * -1) / freq) + 1;
+        nextArrivalTime = moment(trainTime).add(divTime * freq, 'minutes');
+        toAdd = freq - modTime;
+        //console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm:ss")+" minutesAway="+toAdd);
+    } else if (diffTime == 0) {
+        modTime = diffTime % freq;
+        nextArrivalTime = moment(trainTime).add(freq, 'minutes');
+        toAdd = freq - modTime;
+        //console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm")+" minutesAway="+toAdd);
+
+    } else if (diffTime > 0) {
+        modTime = diffTime;
+        nextArrivalTime = trainTime;
+        toAdd = modTime;
+        //console.log("nextArrivalTime="+moment(nextArrivalTime).format("YYYY-MM-DD HH:mm")+" minutesAway="+toAdd);
+    }
+    return nextArrivalTime;
+}
+
+
+/*
     //clearTimeout(arrayVAr["setTimeout"+trainID]);
     //clearInterval(arrayVAr["setIntervalVal"+trainID]);
     //clearInterval(arrayVAr["setIntervalVal1"+trainID]);
@@ -214,14 +286,6 @@ function addTrainTime(theDate,freq,trainID,idxTimer) {
         },(freq-1)*60000);
     },setTimeouTime);
     */
-   idxTimer++;
-    res = [toAdd,moment(nextArrivalTime).format("HH:mm"),setTimeouTime,nextArrivalTime,arrayVAr];
-    
-    return res;
-}
-
-
-
 //factors affecting insolation: angle of the sun, distance between the sun & earth, daylight hours, 
 //, cloud cover, intensity(season)
 //formula of best time and angle in the year? google
